@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -e
+
+echo "==> dots-mangowm — MangoWM port of end-4/dots-hyprland"
+echo ""
+
+# Detect distro
+if command -v apt &>/dev/null; then
+    PKG_MANAGER="apt"
+elif command -v pacman &>/dev/null; then
+    PKG_MANAGER="pacman"
+elif command -v dnf &>/dev/null; then
+    PKG_MANAGER="dnf"
+elif command -v zypper &>/dev/null; then
+    PKG_MANAGER="zypper"
+elif command -v xbps-install &>/dev/null; then
+    PKG_MANAGER="xbps"
+elif command -v emerge &>/dev/null; then
+    PKG_MANAGER="emerge"
+else
+    echo "Unsupported distro. Install MangoWM and Quickshell manually."
+    exit 1
+fi
+
+echo "Detected package manager: $PKG_MANAGER"
+echo ""
+echo "This script will:"
+echo "  1. Install MangoWM + dependencies"
+echo "  2. Install Quickshell (from source or package)"
+echo "  3. Link configs"
+echo ""
+read -rp "Continue? [y/N] " yn
+[[ "$yn" =~ ^[yY] ]] || exit 1
+
+# Install MangoWM
+case "$PKG_MANAGER" in
+    pacman|apt|dnf|zypper|xbps|emerge)
+        echo "Please install MangoWM following: https://github.com/mangowm/mangowm"
+        echo "Then install Quickshell: https://quickshell.outfoxxed.me/"
+        ;;
+esac
+
+# Link configs
+DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo ""
+echo "Linking configs..."
+mkdir -p "$HOME/.config"
+
+for dir in mango quickshell foot fuzzel kitty matugen mpv wlogout fish fontconfig; do
+    target="$HOME/.config/$dir"
+    if [ -e "$target" ]; then
+        echo "  WARNING: $target exists, skipping"
+    else
+        ln -sf "$DOTFILES_DIR/dots/.config/$dir" "$target"
+        echo "  Linked: $target"
+    fi
+done
+
+# Link scripts
+ln -sf "$DOTFILES_DIR/dots/.config/hypr/hyprland/scripts" "$HOME/.config/hypr/hyprland/scripts"
+
+echo ""
+echo "==> Done! Configs linked to ~/.config/"
+echo "    Start MangoWM and Quickshell to apply."
+echo "    Run the patch script for QML IPC:"
+echo "      bash ~/.config/hypr/hyprland/scripts/mangowm-patch.sh"

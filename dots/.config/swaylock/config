@@ -1,0 +1,26 @@
+# swaylock — replaces hyprlock for MangoWM
+# Colors match end-4 Material You scheme (auto-generated)
+
+clock
+show-failed-attempts
+font=monospace
+font-size=16
+
+screenshots
+grace=2
+fade-in=0.3
+
+effect-blur=7x3
+effect-vignette=0.5:0.5
+
+line-uses-inside
+ring-color=0DB7D4
+inside-color=00000000
+key-hl-color=FFFFFF
+text-color=D9E0EE
+separator-color=00000000
+line-color=00000000
+ring-ver-color=0DB7D4
+inside-ver-color=00000000
+ring-wrong-color=FF0000
+inside-wrong-color=00000000
