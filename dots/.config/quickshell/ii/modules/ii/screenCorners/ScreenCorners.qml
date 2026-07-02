@@ -144,9 +144,7 @@ Scope {
             property var monitor: HyprlandData.monitorFor(modelData)
 
             // Hide when fullscreen
-            property var workspacesForMonitor: HyprlandData.workspaces.filter(workspace => workspace.monitor && workspace.monitor.name == monitor.name)
-            property var activeWorkspaceWithFullscreen: workspacesForMonitor.filter(workspace => ((workspace.toplevels.values.filter(window => window.wayland?.fullscreen)[0] != undefined) && workspace.active))[0]
-            property bool fullscreen: activeWorkspaceWithFullscreen != undefined
+            property bool fullscreen: ToplevelManager.toplevels.values.filter(tl => tl.fullscreen).length > 0
 
             CornerPanelWindow {
                 screen: modelData

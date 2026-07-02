@@ -13,7 +13,7 @@ Singleton {
     property var cachedLayoutCodes: ({})
     property string currentLayoutName: ""
     property string currentLayoutCode: ""
-    property var baseLayoutFilePath: "/usr/share/X11/xkb/rules/base.lst"
+    property string baseLayoutFilePath: "/usr/share/X11/xkb/rules/base.lst"
     property bool needsLayoutRefresh: false
 
     onCurrentLayoutNameChanged: root.updateLayoutCode()
@@ -54,18 +54,25 @@ Singleton {
     }
 
     Process {
-        id: fetchDevices
+        id: fetchKbLayout
         running: true
-        command: ["mmsg", "devices", "-j"]
+        command: ["mmsg", "-g", "-k"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    var data = JSON.parse(text);
-                    var kb = data.keyboards ? data.keyboards.find(function(k) { return k.main }) : null;
-                    if (!kb) kb = data.keyboard;
-                    if (kb) {
-                        root.layoutCodes = kb.layout ? kb.layout.split(",") : [];
-                        root.currentLayoutName = kb.active_keymap || "";
+                    var line = text.trim();
+                    var parts = line.split(/\s+/);
+                    if (parts.length >= 3 && parts[1] === "kb_layout") {
+                        var layout = parts.slice(2).join(" ");
+                        var codes = layout.split(/[,;+]/);
+                        var prevLength = root.layoutCodes.length;
+                        root.layoutCodes = codes.map(function(c) { return c.trim(); }).filter(function(c) { return c.length > 0; });
+                        if (codes.length > 0) {
+                            var activeLayout = codes[0].trim();
+                            if (activeLayout !== root.currentLayoutName) {
+                                root.currentLayoutName = activeLayout;
+                            }
+                        }
                     }
                 } catch (e) {}
             }
@@ -76,6 +83,6 @@ Singleton {
         interval: 3000
         running: true
         repeat: true
-        onTriggered: { fetchDevices.running = true; }
+        onTriggered: { fetchKbLayout.running = true; }
     }
 }

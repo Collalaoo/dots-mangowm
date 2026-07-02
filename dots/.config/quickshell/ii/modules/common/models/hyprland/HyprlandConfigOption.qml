@@ -13,6 +13,8 @@ NestableObject {
     property bool set
     property var value
 
+    readonly property string mangoConfig: Directories.homePath + "/.config/mango/General.conf"
+
     Component.onCompleted: fetch()
 
     Connections {
@@ -23,7 +25,7 @@ NestableObject {
     }
 
     function fetch() {
-        fetchProc.command = fetchProc.baseCommand.concat([root.key]);
+        fetchProc.command = ["grep", "^" + root.key.replace(/\./g, "\\.") + "=", root.mangoConfig];
         fetchProc.running = true;
     }
 
@@ -37,25 +39,19 @@ NestableObject {
 
     Process {
         id: fetchProc
-        property list<string> baseCommand: ["mmsg", "getoption", "-j"]
         stdout: StdioCollector {
             onStreamFinished: {
-                if (text == "no such option")
+                var line = text.trim();
+                if (!line) {
+                    root.value = undefined;
+                    root.set = false;
                     return;
-                try {
-                    const obj = JSON.parse(text);
-                    // Note that the value is returned as "<data type>": <value>
-                    // It's the only field that isn't always in the same key so we put it in an else
-                    for (const key in obj) {
-                        if (key == "option")
-                            continue;
-                        else if (key == "set")
-                            root.set = obj[key];
-                        else
-                            root.value = obj[key];
-                    }
-                } catch (e) {
-                    console.log(`[HyprlandConfigOption] Failed to fetch option "${root.key}":\n  - Output: ${text.trim()}\n  - Error: ${e}`);
+                }
+                var eq = line.indexOf("=");
+                if (eq >= 0) {
+                    var val = line.substring(eq + 1).trim();
+                    root.value = val;
+                    root.set = true;
                 }
             }
         }

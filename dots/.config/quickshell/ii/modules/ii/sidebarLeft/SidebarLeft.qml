@@ -18,43 +18,8 @@ Scope { // Scope
         root.detach = !root.detach;
     }
 
-    Process { // Dodge cursor away, pin, move cursor back
-        id: pinWithFunnyHyprlandWorkaroundProc
-        property var hook: null
-        property int cursorX;
-        property int cursorY;
-        function doIt() {
-            command = ["mmsg", "cursorpos"]
-            hook = (output) => {
-                cursorX = parseInt(output.split(",")[0]);
-                cursorY = parseInt(output.split(",")[1]);
-                doIt2();
-            }
-            running = true;
-        }
-        function doIt2(output) {
-            command = ["mmsg", "cursor", "move", "9999", "9999"];
-            hook = () => {
-                doIt3();
-            }
-            running = true;
-        }
-        function doIt3(output) {
-            root.pin = !root.pin;
-            command = ["bash", "-c", `sleep 0.01; mmsg cursor move ${cursorX} ${cursorY}`];
-            hook = null
-            running = true;
-        }
-        stdout: StdioCollector {
-            onStreamFinished: {
-                pinWithFunnyHyprlandWorkaroundProc.hook(text);
-            }
-        }
-    }
-
     function togglePin() {
-        if (!root.pin) pinWithFunnyHyprlandWorkaroundProc.doIt()
-        else root.pin = !root.pin;
+        root.pin = !root.pin;
     }
 
     Component.onCompleted: {

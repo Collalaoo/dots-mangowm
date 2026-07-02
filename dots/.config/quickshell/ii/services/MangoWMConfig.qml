@@ -2,35 +2,36 @@ pragma ComponentBehavior: Bound
 import QtQml
 import Quickshell.Io
 
-// MangoWM config get/set via mmsg
 Singleton {
     id: root
+
+    readonly property string mangoConfigDir: Directories.homePath + "/.config/mango"
 
     signal reloaded()
 
     function get(key) {
-        var result = Process.execSync("mmsg", ["getoption", key])
+        var result = Process.execSync("grep", ["^" + key + "=", root.mangoConfigDir + "/General.conf"]);
         if (result.exitCode == 0) {
-            try { return JSON.parse(result.stdout) } catch (e) {}
+            var line = result.stdout.trim();
+            var eq = line.indexOf("=");
+            if (eq >= 0) return line.substring(eq + 1).trim();
         }
         return null
     }
 
     function set(key, value) {
-        Process.exec("mmsg", ["setoption", key, value], function() {
+        Process.exec("bash", ["-c", "grep -q '^" + key + "=' " + root.mangoConfigDir + "/General.conf && sed -i 's/^" + key + "=.*/" + key + "=" + value + "/' " + root.mangoConfigDir + "/General.conf || echo '" + key + "=" + value + "' >> " + root.mangoConfigDir + "/General.conf"], function() {
             root.reloaded()
         })
     }
 
     function reset(key) {
-        Process.exec("mmsg", ["resetoption", key], function() {
+        Process.exec("sed", ["-i", "/^" + key + "=/d", root.mangoConfigDir + "/General.conf"], function() {
             root.reloaded()
         })
     }
 
     function reload() {
-        Process.exec("mmsg", ["reload"], function() {
-            root.reloaded()
-        })
+        root.reloaded()
     }
 }

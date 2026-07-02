@@ -58,20 +58,18 @@ Item {
     // Function to update workspaceOccupied
     function updateWorkspaceOccupied() {
         workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
-            return HyprlandData.workspaces.some(ws => ws.id === workspaceGroup * root.workspacesShown + i + 1);
+            var wsId = workspaceGroup * root.workspacesShown + i + 1;
+            return (HyprlandData.workspaceById[wsId]?.clients ?? 0) > 0;
         })
     }
 
     // Occupied workspace updates
     Component.onCompleted: updateWorkspaceOccupied()
     Connections {
-        target: HyprlandDataData
-        function onValuesChanged() {
+        target: HyprlandData
+        function onWorkspacesChanged() {
             updateWorkspaceOccupied();
         }
-    }
-    Connections {
-        target: HyprlandData
         function onFocusedWorkspaceChanged() {
             updateWorkspaceOccupied();
         }

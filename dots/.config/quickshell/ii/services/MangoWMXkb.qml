@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQml
 import Quickshell.Io
 
-// Keyboard layout indicator via mmsg
 Singleton {
     id: root
 
@@ -12,7 +11,6 @@ Singleton {
     signal layoutChanged(string layout)
 
     Timer {
-        id: pollTimer
         interval: 2000
         running: true
         repeat: true
@@ -20,15 +18,17 @@ Singleton {
     }
 
     function fetch() {
-        Process.exec("mmsg", ["devices", "-j"], function(result) {
+        Process.exec("mmsg", ["-g", "-k"], function(result) {
             if (result.exitCode != 0) return
             try {
-                var data = JSON.parse(result.stdout)
-                if (data.keyboard && data.keyboard.active_layout) {
-                    var layout = data.keyboard.active_layout
+                var line = result.stdout.trim();
+                var parts = line.split(/\s+/);
+                if (parts.length >= 3 && parts[1] === "kb_layout") {
+                    var layout = parts.slice(2).join(" ");
                     if (layout != root.currentLayout) {
-                        root.currentLayout = layout
-                        root.layoutChanged(layout)
+                        root.currentLayout = layout;
+                        root.layouts = [layout];
+                        root.layoutChanged(layout);
                     }
                 }
             } catch (e) {}

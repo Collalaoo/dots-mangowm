@@ -27,9 +27,8 @@ Variants {
         required property var modelData
 
         // Hide when fullscreen
-        property var workspacesForMonitor: HyprlandData.workspaces.filter(workspace => workspace.monitor && workspace.monitor.name == monitor.name)
-        property var activeWorkspaceWithFullscreen: workspacesForMonitor.filter(workspace => ((workspace.toplevels.values.filter(window => window.wayland?.fullscreen)[0] != undefined) && workspace.active))[0]
-        visible: GlobalStates.screenLocked || (!(activeWorkspaceWithFullscreen != undefined)) || !Config?.options.background.hideWhenFullscreen
+        property var activeWorkspaceWithFullscreen: ToplevelManager.toplevels.values.filter(tl => tl.fullscreen).length > 0
+        visible: GlobalStates.screenLocked || !activeWorkspaceWithFullscreen || !Config?.options.background.hideWhenFullscreen
 
         // Workspaces
         property var monitor: HyprlandData.monitorFor(modelData)

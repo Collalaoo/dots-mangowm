@@ -5,17 +5,13 @@ import qs.modules.common
 import Quickshell
 import Quickshell.Io
 
-/**
- * Simple night light service with automatic mode.
- * Uses mmsg to adjust color temperature and gamma.
- */
 Singleton {
     id: root
     signal gammaChangeAttempt()
 
     readonly property real gammaLowerLimit: 25
 
-    property string from: Config.options?.light?.night?.from ?? "19:00" 
+    property string from: Config.options?.light?.night?.from ?? "19:00"
     property string to: Config.options?.light?.night?.to ?? "06:30"
     property bool automatic: Config.options?.light?.night?.automatic && (Config?.ready ?? true)
     property int colorTemperature: Config.options?.light?.night?.colorTemperature ?? 5000
@@ -48,7 +44,6 @@ Singleton {
         if (from < to) {
             return (t >= from && t <= to);
         } else {
-            // Wrapped around midnight
             return (t >= from || t <= to);
         }
     }
@@ -71,7 +66,6 @@ Singleton {
 
     onShouldBeOnChanged: ensureState()
     function ensureState() {
-        // console.log("[Hyprsunset] Ensuring state:", root.shouldBeOn, "Automatic mode:", root.automatic);
         if (!root.automatic || root.manualActive !== undefined)
             return;
         if (root.shouldBeOn) {
@@ -97,44 +91,19 @@ Singleton {
 
     function enableTemperature() {
         root.temperatureActive = true;
-
-        // console.log("[Hyprsunset] Enabling");
-        Quickshell.execDetached(["mmsg", "sunset", "temperature", `${root.colorTemperature}`]);
     }
 
     function disableTemperature() {
         root.temperatureActive = false;
-        // console.log("[Hyprsunset] Disabling");
-        Quickshell.execDetached(["mmsg", "sunset", "temperature", `${root.defaultColorTemperature}`]);
     }
 
     function setGamma(gamma) {
         root.gamma = Math.max(root.gammaLowerLimit, Math.min(100, gamma));
-
         root.gammaChangeAttempt();
-
-        Quickshell.execDetached(["mmsg", "sunset", "gamma", `${root.gamma}`]);
     }
 
     function fetchState() {
-        fetchProc.running = true;
-    }
-
-    Process {
-        id: fetchProc
-        running: true
-        command: ["mmsg", "sunset", "temperature"]
-        stdout: StdioCollector {
-            id: stateCollector
-            onStreamFinished: {
-                const output = stateCollector.text.trim();
-                if (output.length == 0 || output.startsWith("Couldn't"))
-                    root.temperatureActive = false;
-                else
-                    root.temperatureActive = (output != root.defaultColorTemperature); // 6000 is the default when off
-                // console.log("[Hyprsunset] Fetched state:", output, "->", root.temperatureActive);
-            }
-        }
+        root.temperatureActive = false;
     }
 
     function toggleTemperature(active = undefined) {
@@ -152,12 +121,9 @@ Singleton {
         }
     }
 
-    // Change temp
     Connections {
         target: Config.options.light.night
         function onColorTemperatureChanged() {
-            if (!root.temperatureActive) return;
-            Quickshell.execDetached(["mmsg", "sunset", "temperature", `${Config.options.light.night.colorTemperature}`]);
         }
     }
 }

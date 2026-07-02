@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQml
 import Quickshell.Io
 
-// Provides keybind list from MangoWM config
 Singleton {
     id: root
 
@@ -10,13 +9,30 @@ Singleton {
 
     signal reloaded()
 
+    readonly property string keybindsPath: Directories.homePath + "/.config/mango/Keybinds.conf"
+
+    function parseKeybinds(content) {
+        var binds = [];
+        var lines = content.split("\n");
+
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (!line || line.startsWith("#")) continue;
+
+            var m = line.match(/^bind(?:l|r)?\s*=\s*(.*)$/);
+            if (!m) continue;
+
+            binds.push({ raw: m[1] });
+        }
+
+        root.bindings = binds;
+        root.reloaded();
+    }
+
     function fetch() {
-        Process.exec("mmsg", ["binds", "-j"], function(result) {
+        Process.exec("cat", [root.keybindsPath], function(result) {
             if (result.exitCode != 0) return
-            try {
-                root.bindings = JSON.parse(result.stdout)
-                root.reloaded()
-            } catch (e) {}
+            root.parseKeybinds(result.stdout);
         })
     }
 
