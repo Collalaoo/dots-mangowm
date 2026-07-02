@@ -7,7 +7,7 @@ Port of [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (15k ★) 
 | Component | Status |
 |-----------|--------|
 | **MangoWM config** (keybinds, rules, animations, blur, shadows) | ✅ Done |
-| **Quickshell shell** (bar, sidebars, overview, notifications, media, etc.) | 🔄 IPC wip |
+| **Quickshell shell** (bar, sidebars, lock, background, notifications, media, etc.) | ✅ IPC rewritten (`mmsg` API) |
 | **Material You colors** (matugen) | ✅ Unchanged |
 | **App configs** (kitty, foot, fuzzel, mpv, gtk, fish) | ✅ Unchanged |
 | **Tiling layout switcher** | ✅ Added |
@@ -28,7 +28,7 @@ dots/.config/
 │   ├── Env.conf        Environment variables
 │   └── autostart.conf  Startup programs
 ├── quickshell/ii/      The graphical shell (unchanged from end-4)
-│   └── services/       IPC services rewritten to use mmsg directly
+│   └── services/       IPC services using real mmsg commands (tag‑based WM, plain‑text)
 ├── swaylock/           Lock screen config
 ├── matugen/            Color generation (unchanged)
 ├── (kitty, foot, fuzzel, mpv, etc.) — all unchanged
