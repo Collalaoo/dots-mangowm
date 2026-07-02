@@ -8,7 +8,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 import QtQuick
 
 /**
@@ -34,14 +33,14 @@ Singleton {
             return;
         }
 
-        const focusedName = Hyprland.focusedMonitor.name;
+        const focusedName = HyprlandData.focusedMonitorName;
         const monitor = monitors.find(m => focusedName === m.screen.name);
         if (monitor)
             monitor.setBrightness(monitor.brightness + 0.05);
     }
 
     function decreaseBrightness(): void {
-        const focusedName = Hyprland.focusedMonitor.name;
+        const focusedName = HyprlandData.focusedMonitorName;
         const monitor = monitors.find(m => focusedName === m.screen.name);
         if (monitor && monitor.brightness > 0) 
             monitor.setBrightness(monitor.brightness - 0.05);
@@ -202,15 +201,10 @@ Singleton {
             property string screenshotPath: `${root.screenshotDir}/screenshot-${screenName}.png`
             Connections {
                 enabled: Config.options.light.antiFlashbang.enable && Appearance.m3colors.darkmode
-                target: Hyprland
-                function onRawEvent(event) {
-                    if (["activewindowv2", "windowtitlev2"].includes(event.name)) {
-                        screenshotTimer.interval = root.contentSwitchDelay;
-                        screenshotTimer.restart();
-                    } else if (["workspacev2"].includes(event.name)) {
-                        screenshotTimer.interval = root.workspaceAnimationDelay;
-                        screenshotTimer.restart();
-                    }
+                target: HyprlandData
+                function onWorkspacesChanged() {
+                    screenshotTimer.interval = root.workspaceAnimationDelay;
+                    screenshotTimer.restart();
                 }
             }
 

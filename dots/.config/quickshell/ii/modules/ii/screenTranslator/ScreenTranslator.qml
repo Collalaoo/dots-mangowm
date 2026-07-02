@@ -3,7 +3,6 @@ import qs
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 
 Scope {
     id: root
@@ -12,7 +11,7 @@ Scope {
         GlobalStates.screenTranslatorOpen = false
     }
 
-    readonly property var currentScreen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? null
+    readonly property var currentScreen: Quickshell.screens.find(s => s.name === HyprlandData.focusedMonitorName) ?? null
     
     Loader {
         id: translatorLoader

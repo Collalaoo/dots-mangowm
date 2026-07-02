@@ -28,8 +28,7 @@ dots/.config/
 │   ├── Env.conf        Environment variables
 │   └── autostart.conf  Startup programs
 ├── quickshell/ii/      The graphical shell (unchanged from end-4)
-│   └── services/mangowm/  MangoWM IPC layer
-├── hypr/hyprland/scripts/  Helper scripts (unchanged)
+│   └── services/       IPC services rewritten to use mmsg directly
 ├── swaylock/           Lock screen config
 ├── matugen/            Color generation (unchanged)
 ├── (kitty, foot, fuzzel, mpv, etc.) — all unchanged

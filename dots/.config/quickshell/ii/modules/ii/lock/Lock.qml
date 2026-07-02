@@ -6,7 +6,6 @@ import qs.modules.common.functions
 import qs.modules.common.panels.lock
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 
 LockScreen {
     id: root
@@ -24,7 +23,7 @@ LockScreen {
                 var monName = Quickshell.screens[j].name
                 var wsId = root.savedWorkspaces[monName]
                 if (wsId !== undefined) {
-                    batch += `hyprctl dispatch 'hl.dsp.focus({monitor="${monName}"})'; hyprctl dispatch 'hl.dsp.focus({workspace=${wsId}})';`
+                    batch += `mmsg focus monitor "${monName}"; mmsg focus workspace ${wsId};`
                 }
             }
             if (batch.length > 0) {
@@ -37,7 +36,7 @@ LockScreen {
         context: root.context
     }
 
-    // Single batch for lock and unlock so we don't race multiple hyprctl calls
+    // Single batch for lock and unlock so we don't race multiple mmsg calls
     Connections {
         target: GlobalStates
         function onScreenLockedChanged() {
@@ -53,7 +52,7 @@ LockScreen {
                     }
                     var ws = (mData?.activeWorkspace?.id ?? 1)
                     next[mon] = ws
-                    batch += `hyprctl dispatch 'hl.dsp.focus({monitor="${mon}"})'; hyprctl dispatch 'hl.dsp.focus({workspace=${2147483647 - ws}})';`
+                    batch += `mmsg focus monitor "${mon}"; mmsg focus workspace ${2147483647 - ws};`
                 }
                 root.savedWorkspaces = next
                 Quickshell.execDetached(["bash", "-c", batch])

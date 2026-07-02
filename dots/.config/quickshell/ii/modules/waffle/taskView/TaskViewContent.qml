@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs
 import qs.services
 import qs.modules.common
@@ -186,7 +185,7 @@ Rectangle {
                                 } else {
                                     root.draggingWindow = false;
                                     if (root.hoveredWorkspace !== null && root.hoveredWorkspace.workspace !== windowItem.hyprlandClient.workspace.id) {
-                                        Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${root.hoveredWorkspace.workspace}, follow = false, window = "address:${windowItem.hyprlandClient.address}" })`)
+                                        HyprlandData.dispatch(`hl.dsp.window.move({ workspace = ${root.hoveredWorkspace.workspace}, follow = false, window = "address:${windowItem.hyprlandClient.address}" })`)
                                     } else {
                                         windowItem.openedX = 0;
                                         windowItem.openedY = 0;
@@ -258,7 +257,7 @@ Rectangle {
                 }
 
                 Connections {
-                    target: HyprlandData
+                    target: HyprlandDataData
                     function onActiveWorkspaceChanged() {
                         workspaceListView.reposition();
                     }
@@ -292,7 +291,7 @@ Rectangle {
                     onClicked: {
                         GlobalStates.overviewOpen = false;
                         root.closed(); // Close immediately to avoid weird animations
-                        Hyprland.dispatch(`hl.dsp.focus({workspace = ${workspaceItem.workspace}})`);
+                        HyprlandData.dispatch(`hl.dsp.focus({workspace = ${workspaceItem.workspace}})`);
                     }
                 }
             }

@@ -37,7 +37,7 @@ NestableObject {
 
     Process {
         id: fetchProc
-        property list<string> baseCommand: ["hyprctl", "getoption", "-j"]
+        property list<string> baseCommand: ["mmsg", "getoption", "-j"]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text == "no such option")

@@ -8,7 +8,6 @@ import QtQuick
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import Quickshell.Widgets
 import Qt5Compat.GraphicalEffects
 
@@ -16,7 +15,7 @@ Item {
     id: root
     property bool vertical: false
     property bool borderless: Config.options.bar.borderless
-    readonly property HyprlandMonitor monitor: Hyprland.monitorFor(root.QsWindow.window?.screen)
+    readonly property var monitor: HyprlandData.monitorFor(root.QsWindow.window?.screen)
     readonly property Toplevel activeWindow: ToplevelManager.activeToplevel
     readonly property int effectiveActiveWorkspaceId: monitor?.activeWorkspace?.id ?? 1
     
@@ -59,20 +58,20 @@ Item {
     // Function to update workspaceOccupied
     function updateWorkspaceOccupied() {
         workspaceOccupied = Array.from({ length: root.workspacesShown }, (_, i) => {
-            return Hyprland.workspaces.values.some(ws => ws.id === workspaceGroup * root.workspacesShown + i + 1);
+            return HyprlandData.workspaces.some(ws => ws.id === workspaceGroup * root.workspacesShown + i + 1);
         })
     }
 
     // Occupied workspace updates
     Component.onCompleted: updateWorkspaceOccupied()
     Connections {
-        target: Hyprland.workspaces
+        target: HyprlandDataData
         function onValuesChanged() {
             updateWorkspaceOccupied();
         }
     }
     Connections {
-        target: Hyprland
+        target: HyprlandData
         function onFocusedWorkspaceChanged() {
             updateWorkspaceOccupied();
         }
@@ -88,9 +87,9 @@ Item {
     WheelHandler {
         onWheel: (event) => {
             if (event.angleDelta.y < 0)
-                Hyprland.dispatch(`hl.dsp.focus({workspace = "r+1"})`);
+                HyprlandData.dispatch(`hl.dsp.focus({workspace = "r+1"})`);
             else if (event.angleDelta.y > 0)
-                Hyprland.dispatch(`hl.dsp.focus({workspace = "r-1"})`);
+                HyprlandData.dispatch(`hl.dsp.focus({workspace = "r-1"})`);
         }
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
     }
@@ -100,7 +99,7 @@ Item {
         acceptedButtons: Qt.BackButton
         onPressed: (event) => {
             if (event.button === Qt.BackButton) {
-                Hyprland.dispatch(`hl.dsp.workspace.toggle_special("special")`);
+                HyprlandData.dispatch(`hl.dsp.workspace.toggle_special("special")`);
             } 
         }
     }
@@ -199,7 +198,7 @@ Item {
                 property int workspaceValue: workspaceGroup * root.workspacesShown + index + 1
                 implicitHeight: vertical ? Appearance.sizes.verticalBarWidth : Appearance.sizes.barHeight
                 implicitWidth: vertical ? Appearance.sizes.verticalBarWidth : Appearance.sizes.verticalBarWidth
-                onPressed: Hyprland.dispatch(`hl.dsp.focus({ workspace = ${workspaceValue}})`)
+                onPressed: HyprlandData.dispatch(`hl.dsp.focus({ workspace = ${workspaceValue}})`)
                 width: vertical ? undefined : root.workspaceButtonWidth
                 height: vertical ? root.workspaceButtonWidth : undefined
 

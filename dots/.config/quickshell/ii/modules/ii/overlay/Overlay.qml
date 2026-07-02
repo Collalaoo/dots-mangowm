@@ -8,7 +8,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 
 Scope {
     id: root
@@ -44,13 +43,7 @@ Scope {
                 right: true
             }
 
-            HyprlandFocusGrab {
-                id: grab
-                windows: [overlayWindow]
-                active: false
-                onCleared: () => {
-                    if (!active) GlobalStates.overlayOpen = false;
-                }
+            
             }
 
             Connections {

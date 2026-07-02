@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Quickshell
-import Quickshell.Hyprland
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
@@ -54,12 +53,7 @@ Loader {
             edges: root.barAtBottom ? Edges.Top : Edges.Bottom
         }
 
-        HyprlandFocusGrab {
-            id: focusGrab
-            active: true
-            windows: [popupWindow]
-            onCleared: root.focusCleared();
-        }
+        
 
         function close() {
             if (root.noSmoothClosing) root.active = false;

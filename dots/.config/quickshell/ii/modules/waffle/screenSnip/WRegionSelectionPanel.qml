@@ -6,7 +6,6 @@ import Qt.labs.synchronizer
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -58,7 +57,7 @@ PanelWindow {
     }
 
     // Hyprland stuff
-    readonly property HyprlandMonitor hyprlandMonitor: Hyprland.monitorFor(screen)
+    readonly property var hyprlandMonitor: HyprlandData.monitorFor(screen)
     readonly property real monitorScale: hyprlandMonitor.scale
     readonly property var windows: [...HyprlandData.windowList].sort((a, b) => {
         // Sort floating=true windows before others

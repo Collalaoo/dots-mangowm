@@ -10,7 +10,6 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 
 Scope {
     id: overviewScope
@@ -34,8 +33,8 @@ Scope {
             sourceComponent: PanelWindow {
                 id: root
                 property string searchingText: ""
-                readonly property HyprlandMonitor monitor: Hyprland.monitorFor(root.screen)
-                property bool monitorIsFocused: (Hyprland.focusedMonitor?.id == monitor?.id)
+                readonly property var monitor: HyprlandData.monitorFor(root.screen)
+                property bool monitorIsFocused: (HyprlandData.focusedMonitorName == monitor.name)
                 screen: panelLoader.modelData
 
                 WlrLayershell.namespace: "quickshell:wTaskView"

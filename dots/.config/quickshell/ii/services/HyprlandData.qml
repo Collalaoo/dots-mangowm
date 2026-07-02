@@ -4,14 +4,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
-import Quickshell.Hyprland
 
-/**
- * Provides access to some Hyprland data not available in Quickshell.Hyprland.
- */
 Singleton {
     id: root
+
     property var windowList: []
     property var addresses: []
     property var windowByAddress: ({})
@@ -20,147 +16,161 @@ Singleton {
     property var workspaceById: ({})
     property var activeWorkspace: null
     property var monitors: []
+    property string focusedMonitorName: ""
     property var layers: ({})
 
-    // Convenient stuff
+    signal focusedWorkspaceChanged(int id)
+    signal workspacesChanged()
 
     function toplevelsForWorkspace(workspace) {
-        return ToplevelManager.toplevels.values.filter(toplevel => {
-            const address = `0x${toplevel.HyprlandToplevel?.address}`;
-            var win = HyprlandData.windowByAddress[address];
-            return win?.workspace?.id === workspace;
+        return root.windowList.filter(function(win) {
+            return win.workspace === workspace;
         })
     }
 
     function hyprlandClientsForWorkspace(workspace) {
-        return root.windowList.filter(win => win.workspace.id === workspace);
+        return root.windowList.filter(function(win) {
+            return win.workspace === workspace;
+        })
     }
 
     function clientForToplevel(toplevel) {
-        if (!toplevel || !toplevel.HyprlandToplevel) {
-            return null;
-        }
-        const address = `0x${toplevel?.HyprlandToplevel?.address}`;
-        return root.windowByAddress[address];
-    }
-
-    // Internals
-
-    function updateWindowList() {
-        getClients.running = true;
-    }
-
-    function updateLayers() {
-        getLayers.running = true;
-    }
-
-    function updateMonitors() {
-        getMonitors.running = true;
-    }
-
-    function updateWorkspaces() {
-        getWorkspaces.running = true;
-        getActiveWorkspace.running = true;
-    }
-
-    function updateAll() {
-        updateWindowList();
-        updateMonitors();
-        updateLayers();
-        updateWorkspaces();
+        if (!toplevel) return null;
+        var addr = toplevel.address ?? toplevel.var?.address;
+        if (!addr) return null;
+        return root.windowByAddress[addr.startsWith("0x") ? addr : "0x" + addr];
     }
 
     function biggestWindowForWorkspace(workspaceId) {
-        const windowsInThisWorkspace = HyprlandData.windowList.filter(w => w.workspace.id == workspaceId);
-        return windowsInThisWorkspace.reduce((maxWin, win) => {
-            const maxArea = (maxWin?.size?.[0] ?? 0) * (maxWin?.size?.[1] ?? 0);
-            const winArea = (win?.size?.[0] ?? 0) * (win?.size?.[1] ?? 0);
+        var wins = root.windowList.filter(function(w) { return w.workspace == workspaceId });
+        return wins.reduce(function(maxWin, win) {
+            var maxArea = (maxWin?.size?.[0] ?? 0) * (maxWin?.size?.[1] ?? 0);
+            var winArea = (win?.size?.[0] ?? 0) * (win?.size?.[1] ?? 0);
             return winArea > maxArea ? win : maxWin;
         }, null);
     }
 
-    Component.onCompleted: {
-        updateAll();
+    function monitorFor(screen) {
+        if (!screen) return null;
+        for (var i = 0; i < root.monitors.length; i++) {
+            if (root.monitors[i].name === screen.name) return root.monitors[i];
+        }
+        if (root.monitors.length > 0) return root.monitors[0];
+        return null;
     }
 
-    Connections {
-        target: Hyprland
+    function dispatch(cmd) {
+        var parts = cmd.split(/\s+/);
+        var args = ["dispatch"].concat(parts);
+        Process.exec("mmsg", args, function() {});
+    }
 
-        function onRawEvent(event) {
-            // console.log("Hyprland raw event:", event.name);
-            if (["openlayer", "closelayer", "screencast"].includes(event.name)) return;
-            updateAll()
+    function updateAll() {
+        fetchClients.running = true;
+        fetchMonitors.running = true;
+        fetchWorkspacesList.running = true;
+        fetchActiveWs.running = true;
+    }
+
+    function _updateFocusedMonitor() {
+        for (var i = 0; i < root.monitors.length; i++) {
+            if (root.monitors[i].focused) {
+                root.focusedMonitorName = root.monitors[i].name;
+                return;
+            }
         }
+        if (root.monitors.length > 0)
+            root.focusedMonitorName = root.monitors[0].name;
+    }
+
+    Timer {
+        interval: 500
+        running: true
+        repeat: true
+        onTriggered: updateAll()
     }
 
     Process {
-        id: getClients
-        command: ["hyprctl", "clients", "-j"]
+        id: fetchClients
+        command: ["mmsg", "clients", "-j"]
         stdout: StdioCollector {
-            id: clientsCollector
             onStreamFinished: {
-                root.windowList = JSON.parse(clientsCollector.text)
-                let tempWinByAddress = {};
-                for (var i = 0; i < root.windowList.length; ++i) {
-                    var win = root.windowList[i];
-                    tempWinByAddress[win.address] = win;
-                }
-                root.windowByAddress = tempWinByAddress;
-                root.addresses = root.windowList.map(win => win.address);
+                try {
+                    var data = JSON.parse(text);
+                    root.windowList = data;
+                    var byAddr = {};
+                    for (var i = 0; i < data.length; ++i) {
+                        byAddr[data[i].address] = data[i];
+                    }
+                    root.windowByAddress = byAddr;
+                    root.addresses = data.map(function(w) { return w.address });
+                } catch (e) {}
             }
         }
     }
 
     Process {
-        id: getMonitors
-        command: ["hyprctl", "monitors", "-j"]
+        id: fetchMonitors
+        command: ["mmsg", "monitors", "-j"]
         stdout: StdioCollector {
-            id: monitorsCollector
             onStreamFinished: {
-                root.monitors = JSON.parse(monitorsCollector.text);
+                try {
+                    root.monitors = JSON.parse(text);
+                    root._updateFocusedMonitor();
+                } catch (e) {}
             }
         }
     }
 
     Process {
-        id: getLayers
-        command: ["hyprctl", "layers", "-j"]
+        id: fetchWorkspacesList
+        command: ["mmsg", "workspaces", "-j"]
         stdout: StdioCollector {
-            id: layersCollector
             onStreamFinished: {
-                root.layers = JSON.parse(layersCollector.text);
+                try {
+                    var raw = JSON.parse(text);
+                    var filtered = raw.filter(function(ws) { return ws.id >= 1 && ws.id <= 100 });
+                    var changed = filtered.length !== root.workspaces.length;
+                    root.workspaces = filtered;
+                    var byId = {};
+                    for (var i = 0; i < filtered.length; ++i) {
+                        byId[filtered[i].id] = filtered[i];
+                    }
+                    root.workspaceById = byId;
+                    root.workspaceIds = filtered.map(function(ws) { return ws.id });
+                    if (changed) root.workspacesChanged();
+                } catch (e) {}
             }
         }
     }
 
     Process {
-        id: getWorkspaces
-        command: ["hyprctl", "workspaces", "-j"]
+        id: fetchActiveWs
+        command: ["mmsg", "activeworkspace", "-j"]
         stdout: StdioCollector {
-            id: workspacesCollector
             onStreamFinished: {
-                var rawWorkspaces = JSON.parse(workspacesCollector.text);
-                // Filter out invalid workspace ids (e.g. lock-screen temp workspace 2147483647 - N)
-                root.workspaces = rawWorkspaces.filter(ws => ws.id >= 1 && ws.id <= 100);
-                let tempWorkspaceById = {};
-                for (var i = 0; i < root.workspaces.length; ++i) {
-                    var ws = root.workspaces[i];
-                    tempWorkspaceById[ws.id] = ws;
-                }
-                root.workspaceById = tempWorkspaceById;
-                root.workspaceIds = root.workspaces.map(ws => ws.id);
+                try {
+                    var data = JSON.parse(text);
+                    var prevId = root.activeWorkspace?.id;
+                    root.activeWorkspace = data;
+                    if (data && data.id !== prevId)
+                        root.focusedWorkspaceChanged(data.id);
+                } catch (e) {}
             }
         }
     }
 
     Process {
-        id: getActiveWorkspace
-        command: ["hyprctl", "activeworkspace", "-j"]
+        id: fetchLayers
+        command: ["mmsg", "layers", "-j"]
         stdout: StdioCollector {
-            id: activeWorkspaceCollector
             onStreamFinished: {
-                root.activeWorkspace = JSON.parse(activeWorkspaceCollector.text);
+                try { root.layers = JSON.parse(text); } catch (e) {}
             }
         }
     }
+
+    function updateLayers() { fetchLayers.running = true; }
+
+    Component.onCompleted: updateAll()
 }

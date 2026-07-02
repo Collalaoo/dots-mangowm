@@ -12,17 +12,31 @@ QuickToggleButton {
     onClicked: {
         root.toggled = !root.toggled
         if (root.toggled) {
-            Quickshell.execDetached(["bash", "-c", `hyprctl --batch "keyword animations:enabled 0; keyword decoration:shadow:enabled 0; keyword decoration:blur:enabled 0; keyword general:gaps_in 0; keyword general:gaps_out 0; keyword general:border_size 1; keyword decoration:rounding 0; keyword general:allow_tearing 1"`])
+            Quickshell.execDetached(["mmsg", "setoption", "animations:enabled", "0"])
+            Quickshell.execDetached(["mmsg", "setoption", "decoration:shadow:enabled", "0"])
+            Quickshell.execDetached(["mmsg", "setoption", "decoration:blur:enabled", "0"])
+            Quickshell.execDetached(["mmsg", "setoption", "general:gaps_in", "0"])
+            Quickshell.execDetached(["mmsg", "setoption", "general:gaps_out", "0"])
+            Quickshell.execDetached(["mmsg", "setoption", "general:border_size", "1"])
+            Quickshell.execDetached(["mmsg", "setoption", "decoration:rounding", "0"])
+            Quickshell.execDetached(["mmsg", "setoption", "general:allow_tearing", "1"])
         } else {
-            Quickshell.execDetached(["hyprctl", "reload"])
+            Quickshell.execDetached(["mmsg", "reload"])
         }
     }
     Process {
         id: fetchActiveState
         running: true
-        command: ["bash", "-c", `test "$(hyprctl getoption animations:enabled -j | jq ".int")" -ne 0`]
-        onExited: (exitCode, exitStatus) => {
-            root.toggled = exitCode !== 0 // Inverted because enabled = nonzero exit
+        command: ["mmsg", "getoption", "animations:enabled"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    var data = JSON.parse(text);
+                    root.toggled = (data.int != null && data.int === 0);
+                } catch (e) {
+                    root.toggled = false;
+                }
+            }
         }
     }
     StyledToolTip {

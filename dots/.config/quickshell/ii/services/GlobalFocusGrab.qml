@@ -1,14 +1,7 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell
-import Quickshell.Hyprland
 
-/**
- * Manages a HyprlandFocusGrab that's to be shared by all windows.
- * "Persistent" is for windows that should always be included but not closed on dismiss, like bar and onscreen keyboard.
- * "Dismissable" is for stuff like sidebars
- */ 
 Singleton {
     id: root
 
@@ -56,17 +49,7 @@ Singleton {
         return element?.activeFocus || Array.from(
             element?.children
         ).some(
-            (child) => hasActive(child)
+            function(child) { return root.hasActive(child); }
         );
     }
-
-    HyprlandFocusGrab {
-        id: grab
-        windows: root.dismissable.every(w => !w?.focusable) || root.dismissable.some(w => hasActive(w?.contentItem)) ? [...root.dismissable, ...root.persistent] : [...root.dismissable]
-        active: root.dismissable.length > 0
-        onCleared: () => {
-            root.dismiss();
-        }
-    }
-
 }

@@ -6,7 +6,6 @@ import QtQuick
 import Quickshell.Io
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Hyprland
 
 Scope { // Scope
     id: root
@@ -25,7 +24,7 @@ Scope { // Scope
         property int cursorX;
         property int cursorY;
         function doIt() {
-            command = ["hyprctl", "cursorpos"]
+            command = ["mmsg", "cursorpos"]
             hook = (output) => {
                 cursorX = parseInt(output.split(",")[0]);
                 cursorY = parseInt(output.split(",")[1]);
@@ -34,7 +33,7 @@ Scope { // Scope
             running = true;
         }
         function doIt2(output) {
-            command = ["bash", "-c", "hyprctl dispatch 'hl.dsp.cursor.move({x=9999,y=9999})'"];
+            command = ["mmsg", "cursor", "move", "9999", "9999"];
             hook = () => {
                 doIt3();
             }
@@ -42,7 +41,7 @@ Scope { // Scope
         }
         function doIt3(output) {
             root.pin = !root.pin;
-            command = ["bash", "-c", `sleep 0.01; hyprctl dispatch 'hl.dsp.cursor.move({x=${cursorX},y=${cursorY}})'`];
+            command = ["bash", "-c", `sleep 0.01; mmsg cursor move ${cursorX} ${cursorY}`];
             hook = null
             running = true;
         }

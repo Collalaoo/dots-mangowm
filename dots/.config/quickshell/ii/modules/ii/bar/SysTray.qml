@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Services.SystemTray
 import qs.services
 import qs.modules.common
@@ -52,16 +51,7 @@ Item {
         }
     }
 
-    HyprlandFocusGrab {
-        id: focusGrab
-        active: false
-        windows: [trayOverflowLayout.QsWindow?.window, root.activeMenu]
-        onCleared: {
-            root.trayOverflowOpen = false;
-            if (root.activeMenu) {
-                root.activeMenu.close();
-                root.activeMenu = null;
-            }
+    
         }
     }
 

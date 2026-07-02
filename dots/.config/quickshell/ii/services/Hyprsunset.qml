@@ -4,12 +4,10 @@ import QtQuick
 import qs.modules.common
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 
 /**
- * Simple hyprsunset service with automatic mode.
- * In theory we don't need this because hyprsunset has a config file, but it somehow doesn't work.
- * It should also be possible to control it via hyprctl, but it doesn't work consistently either so we're just killing and launching.
+ * Simple night light service with automatic mode.
+ * Uses mmsg to adjust color temperature and gamma.
  */
 Singleton {
     id: root
@@ -83,12 +81,7 @@ Singleton {
         }
     }
 
-    function startHyprsunset() {
-        Quickshell.execDetached(["bash", "-c", `pidof hyprsunset || hyprsunset`]);
-    }
-
     function load() {
-        root.startHyprsunset();
         root.ensureState();
     }
 
@@ -106,14 +99,13 @@ Singleton {
         root.temperatureActive = true;
 
         // console.log("[Hyprsunset] Enabling");
-        root.startHyprsunset();
-        Quickshell.execDetached(["bash", "-c", `hyprctl hyprsunset temperature ${root.colorTemperature}`]);
+        Quickshell.execDetached(["mmsg", "sunset", "temperature", `${root.colorTemperature}`]);
     }
 
     function disableTemperature() {
         root.temperatureActive = false;
         // console.log("[Hyprsunset] Disabling");
-        Quickshell.execDetached(["bash", "-c", `hyprctl hyprsunset temperature ${root.defaultColorTemperature}`]);
+        Quickshell.execDetached(["mmsg", "sunset", "temperature", `${root.defaultColorTemperature}`]);
     }
 
     function setGamma(gamma) {
@@ -121,8 +113,7 @@ Singleton {
 
         root.gammaChangeAttempt();
 
-        root.startHyprsunset();
-        Quickshell.execDetached(["bash", "-c", `hyprctl hyprsunset gamma ${root.gamma}`]);
+        Quickshell.execDetached(["mmsg", "sunset", "gamma", `${root.gamma}`]);
     }
 
     function fetchState() {
@@ -132,7 +123,7 @@ Singleton {
     Process {
         id: fetchProc
         running: true
-        command: ["bash", "-c", "hyprctl hyprsunset temperature"]
+        command: ["mmsg", "sunset", "temperature"]
         stdout: StdioCollector {
             id: stateCollector
             onStreamFinished: {
@@ -166,7 +157,7 @@ Singleton {
         target: Config.options.light.night
         function onColorTemperatureChanged() {
             if (!root.temperatureActive) return;
-            Quickshell.execDetached(["hyprctl", "hyprsunset", "temperature", `${Config.options.light.night.colorTemperature}`]);
+            Quickshell.execDetached(["mmsg", "sunset", "temperature", `${Config.options.light.night.colorTemperature}`]);
         }
     }
 }

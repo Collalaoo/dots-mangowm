@@ -1,5 +1,0 @@
-module mangowm
-singleton MangoWMData 1.0 MangoWMData.qml
-singleton MangoWMConfig 1.0 MangoWMConfig.qml
-singleton MangoWMKeybinds 1.0 MangoWMKeybinds.qml
-singleton MangoWMXkb 1.0 MangoWMXkb.qml

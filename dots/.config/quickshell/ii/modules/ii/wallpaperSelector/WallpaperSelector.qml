@@ -8,7 +8,6 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Hyprland
 
 Scope {
     id: root
@@ -19,8 +18,8 @@ Scope {
 
         sourceComponent: PanelWindow {
             id: panelWindow
-            readonly property HyprlandMonitor monitor: Hyprland.monitorFor(panelWindow.screen)
-            property bool monitorIsFocused: (Hyprland.focusedMonitor?.id == monitor?.id)
+            readonly property var monitor: HyprlandData.monitorFor(panelWindow.screen)
+            property bool monitorIsFocused: (HyprlandData.focusedMonitorName == monitor.name)
 
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:wallpaperSelector"

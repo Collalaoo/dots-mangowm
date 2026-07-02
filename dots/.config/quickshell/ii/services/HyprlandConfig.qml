@@ -3,61 +3,41 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
+import Quickshell.Io
 
 import qs.modules.common
 import qs.modules.common.functions
 
-/**
- * Configs Hyprland
- */
 Singleton {
     id: root
-    
+
     signal reloaded()
 
-    readonly property string configuratorScriptPath: Quickshell.shellPath("scripts/hyprland/hyprconfigurator.py")
-    readonly property string shellOverridesPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/hyprland/shellOverrides/main.lua`)
-
-    function set(key: string, value: var) {
-        Quickshell.execDetached(["bash", "-c", //
-            `${root.configuratorScriptPath} --file ${root.shellOverridesPath} --set "${key}" "${value}"` //
-        ])
-    }
-    
-    function setMany(entries: var) {
-        let args = ""
-        for (let key in entries) {
-            args += `--set "${key}" "${entries[key]}" `
-        }
-        Quickshell.execDetached(["bash", "-c", //
-            `${root.configuratorScriptPath} --file ${root.shellOverridesPath} ${args}` //
-        ])
-    }
-    
-    function reset(key: string) {
-        Quickshell.execDetached(["bash", "-c", //
-            `${root.configuratorScriptPath} --file ${root.shellOverridesPath} --reset "${key}"` //
-        ])
-    }
-    
-    function resetMany(keys: list<string>) {
-        let args = ""
-        for (let i = 0; i < keys.length; i++) {
-            args += `--reset "${keys[i]}" `
-        }
-        Quickshell.execDetached(["bash", "-c", //
-            `${root.configuratorScriptPath} --file ${root.shellOverridesPath} ${args}` //
-        ])
+    function set(key, value) {
+        Process.exec("mmsg", ["setoption", key, value], function() {
+            root.reloaded()
+        })
     }
 
-    Connections {
-        target: Hyprland
-
-        function onRawEvent(event) {
-            if (event.name == "configreloaded") {
-                root.reloaded()
-            }
+    function setMany(entries) {
+        var cmds = [];
+        for (var key in entries) {
+            cmds.push("setoption", key, entries[key]);
         }
+        if (cmds.length > 0)
+            Process.exec("mmsg", cmds, function() { root.reloaded() });
+    }
+
+    function reset(key) {
+        Process.exec("mmsg", ["resetoption", key], function() {
+            root.reloaded()
+        })
+    }
+
+    function resetMany(keys) {
+        var cmds = ["resetoption"];
+        for (var i = 0; i < keys.length; i++) cmds.push(keys[i]);
+        if (cmds.length > 1)
+            Process.exec("mmsg", cmds, function() { root.reloaded() });
     }
 }

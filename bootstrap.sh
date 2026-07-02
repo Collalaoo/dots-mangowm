@@ -96,31 +96,20 @@ install_deps() {
 }
 
 link_configs() {
-  info "Linking configs..."
+  info "Copying configs..."
   mkdir -p "$HOME/.config"
   for dir in mango quickshell foot kitty fuzzel matugen mpv wlogout swaylock fish fontconfig; do
     target="$HOME/.config/$dir"
-    if [ -e "$target" ] && [ ! -L "$target" ]; then
+    if [ -e "$target" ]; then
       bak="$target.bak.$(date +%s)"
       mv "$target" "$bak"
       info "  Backed up $target → $bak"
     fi
-    ln -sf "$DOTDIR/dots/.config/$dir" "$target" 2>/dev/null || true
+    cp -r "$DOTDIR/dots/.config/$dir" "$target" 2>/dev/null || true
   done
-  # scripts
   mkdir -p "$HOME/.config/hypr"
-  ln -sf "$DOTDIR/dots/.config/hypr/hyprland/scripts" "$HOME/.config/hypr/hyprland/scripts"
-  ok "Configs linked!"
-}
-
-run_patch() {
-  info "Patching QML imports for MangoWM..."
-  if [ -f "$HOME/.config/hypr/hyprland/scripts/mangowm-patch.sh" ]; then
-    bash "$HOME/.config/hypr/hyprland/scripts/mangowm-patch.sh"
-    ok "QML files patched!"
-  else
-    info "Patch script not found, skipping"
-  fi
+  cp -r "$DOTDIR/dots/.config/hypr/hyprland/scripts" "$HOME/.config/hypr/hyprland/scripts" 2>/dev/null || true
+  ok "Configs copied!"
 }
 
 # ── main ────────────────────────────────────────────────────────────
@@ -147,7 +136,6 @@ install_mangowm "$DISTRO"
 install_quickshell "$DISTRO"
 install_deps "$DISTRO"
 link_configs
-run_patch
 
 echo ""
 ok "Done! Restart MangoWM or run: mangoctl reload"
