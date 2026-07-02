@@ -43,15 +43,16 @@ dots/.config/
 
 ## Install
 
+**One-liner (recommended):**
+```sh
+bash <(curl -fsSL https://raw.githubusercontent.com/Collalaoo/dots-mangowm/main/bootstrap.sh)
+```
+
+**Or manually:**
 ```sh
 git clone https://github.com/Collalaoo/dots-mangowm.git ~/.dotfiles
 cd ~/.dotfiles
-./setup
-```
-
-Then patch QML imports:
-```sh
-bash ~/.config/hypr/hyprland/scripts/mangowm-patch.sh
+bash bootstrap.sh
 ```
 
 ## Credits
