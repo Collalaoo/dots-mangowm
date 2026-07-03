@@ -257,7 +257,7 @@ Rectangle {
                 }
 
                 Connections {
-                    target: HyprlandDataData
+                    target: HyprlandData
                     function onActiveWorkspaceChanged() {
                         workspaceListView.reposition();
                     }

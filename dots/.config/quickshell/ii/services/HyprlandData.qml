@@ -183,8 +183,7 @@ Singleton {
         var byAddr = {};
         var addrs = [];
 
-        var activeWsId = root.activeWorkspace?.id ?? 1;
-        var activeWsObj = { id: activeWsId, name: String(activeWsId) };
+        var defaultWsId = root.activeWorkspace?.id ?? 1;
 
         for (var i = 0; i < toplevels.length; i++) {
             var tl = toplevels[i];
@@ -198,11 +197,15 @@ Singleton {
                 if (root.monitors[mi].name === monName) { monId = root.monitors[mi].id; break; }
             }
 
+            var wsData = tl.var?.workspace;
+            var wsId = wsData ? wsData.id : defaultWsId;
+            var wsName = wsData ? wsData.name : String(defaultWsId);
+
             var win = {
                 address: addr,
                 class: tl.appId || "",
                 title: tl.title || "",
-                workspace: activeWsObj,
+                workspace: { id: wsId, name: wsName },
                 at: [tl.x || 0, tl.y || 0],
                 size: [tl.width || 0, tl.height || 0],
                 mapped: tl.activated ?? true,
